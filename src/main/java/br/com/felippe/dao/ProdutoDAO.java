@@ -24,4 +24,20 @@ public class ProdutoDAO {
             this.entityManager.remove(produto);
         }
     }
+    public void atualizar(Produto produto) {
+        this.entityManager.merge(produto);
+    }
+
+    public void deletar(Produto produto) {
+        produto = entityManager.merge(produto);
+        this.entityManager.remove(produto);
+    }
+
+    public List<Produto> buscarTodosOsProdutos() {
+        return this.entityManager.createQuery("SELECT p FROM Produto p", Produto.class).getResultList();
+    }
+
+    public List<Produto> buscarProdutoPorDescricao(String nome) {
+        return this.entityManager.createQuery("SELECT p FROM Produto p WHERE p.descricao = :nome", Produto.class).setParameter("nome", nome).getResultList();
+    }
 }
