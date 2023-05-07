@@ -1,6 +1,8 @@
 package br.com.felippe.persistencia;
 
+import br.com.felippe.dao.ProdutoDAO;
 import br.com.felippe.modelos.Produto;
+import br.com.felippe.utils.JPAUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,49 +10,37 @@ import org.junit.Test;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import java.math.BigDecimal;
 import java.util.List;
 
 public class CadastroProdutoTest {
+    private EntityManager entityManager = JPAUtil.getEntityManager();
+    private ProdutoDAO dao = new ProdutoDAO(entityManager);
+
     @Before
     public void setUp() {
-        limparBancoDeDados();
+        entityManager.getTransaction().begin();
+        dao.limparProdutos();
+        entityManager.getTransaction().commit();
+
     }
 
     @Test
     public void DeveriaCadastrarProdutoNoBancoDeDados() {
-        Produto celular = new Produto();
-        celular.setNome("Celular");
-        celular.setDescricao("Galaxy S20 Fe");
 
-        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("loja");
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        Produto ps4 = new Produto("Video Game", "Playstation4", new BigDecimal(4000) );
 
         entityManager.getTransaction().begin();
-        entityManager.persist(celular);
+        dao.adicionar(ps4);
 
         entityManager.flush();
         entityManager.clear();
         entityManager.getTransaction().commit();
 
-        Produto produtoDoBancoDeDados = entityManager.find(Produto.class, celular.getId());
-
+        Produto produtoDoBancoDeDados = entityManager.find(Produto.class, ps4.getId());
         entityManager.close();
-        entityManagerFactory.close();
+        Assert.assertEquals(ps4.getDescricao(), produtoDoBancoDeDados.getDescricao());
 
-        Assert.assertEquals(celular.getNome(), produtoDoBancoDeDados.getNome());
-        Assert.assertEquals(celular.getDescricao(), produtoDoBancoDeDados.getDescricao());
     }
 
-    private void limparBancoDeDados() {
-        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("loja");
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-
-        entityManager.getTransaction().begin();
-        List<Produto> produtos = entityManager.createQuery("select p from Produto p", Produto.class).getResultList();
-        for (Produto produto : produtos) {
-            entityManager.remove(produto);
-        }
-        entityManager.getTransaction().commit();
-        entityManager.close();
-    }
 }
